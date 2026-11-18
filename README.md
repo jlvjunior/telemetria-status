@@ -45,7 +45,7 @@ Roda a cada **push na `main`**, a cada **pull request** e sob demanda. Cada etap
 |---|---|
 | 🔧 Preparação | Baixa o código, instala o Node.js 24 e as dependências, mostra o ambiente |
 | ✅ Validação | Confere se o `index.html` existe, valida o HTML (html-validate), a sintaxe do JavaScript e a lista de serviços |
-| 🧪 Testes | 19 testes automatizados (regras de estado, incidentes, SLA, verificador HTTP, configuração e build), com cobertura |
+| 🧪 Testes | 20 testes automatizados (regras de estado, incidentes, SLA, verificador HTTP, configuração e build), com cobertura |
 | 🏗 Build | Busca o histórico mais recente, gera a pasta `dist/` com `build-info.json` (versão, commit, execução) e guarda como **artefato** |
 | 🚀 Deploy | Publica `dist/` no Cloudflare Pages com o Wrangler: **produção** na `main`, **prévia** com link comentado no pull request |
 | 🔎 Verificação pós-deploy | Acessa o site publicado e confirma que ele responde com o commit que acabou de ser publicado |
@@ -81,9 +81,17 @@ npm run verificar    # verifica os serviços de verdade e grava dados/status.jso
 npm run local        # gera o dist/ e abre em http://localhost:3000
 ```
 
-## Como acrescentar um serviço
+## Como acrescentar, editar ou remover serviços
 
-Inclua uma linha em `config/servicos.json`:
+A lista fica em `config/servicos.json`. Qualquer alteração nela passa pelo pipeline: se a validação recusar, nada é publicado.
+
+1. **Pelo próprio site:** botão **Adicionar ou editar serviços** → preencha nome, categoria e endereço → **Gerar a linha do serviço**. O formulário valida com as mesmas regras do pipeline, copia a linha pronta e abre o arquivo no editor do GitHub; cole a linha antes do `]` final e clique em **Commit changes**.
+2. **Pelo GitHub:** abra `config/servicos.json` no repositório, clique no lápis (**Edit this file**), altere ou apague a linha do serviço e faça o commit.
+3. **Pelo computador:** edite o arquivo no VS Code e rode `git add .`, `git commit` e `git push`.
+
+Um serviço novo aparece no painel como "Aguardando verificação" até a próxima rodada do monitoramento; para verificar na hora, rode o workflow **Monitoramento** em **Actions → Run workflow**.
+
+Formato de cada linha:
 
 ```json
 { "id": "meu-servico", "nome": "Meu Serviço", "categoria": "Trabalho", "url": "https://meuservico.com.br/" }

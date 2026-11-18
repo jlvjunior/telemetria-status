@@ -84,3 +84,19 @@ dialog::backdrop { background: rgb(0 0 0 / 60%); }
   .incidentes .motivo { grid-column: auto; }
   .filtros, .filtros label, input, select { width: 100%; }
 }
+
+.titulo-acoes { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.btn.primario { background: var(--info); border-color: var(--info); color: #fff; }
+.btn:disabled { opacity: .6; cursor: wait; }
+.form-servico { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
+.form-servico label { display: grid; gap: 3px; font-size: .78rem; color: var(--mudo); }
+.form-servico .largo { grid-column: 1 / -1; }
+.form-servico input, .form-servico select { width: 100%; }
+.erros { color: #ff7383; font-size: .85rem; margin: 8px 0 0; padding-left: 18px; }
+.erros:empty { display: none; }
+#g-resultado h3 { font-size: .9rem; color: var(--forte); margin: 16px 0 6px; }
+pre { background: var(--bg); border: 1px solid var(--borda); border-radius: var(--raio); padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .82rem; margin: 0 0 8px; }
+.passos { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: .9rem; }
+.passos a, .nota a { color: #8ab8ff; }
+.nota { font-size: .82rem; margin-top: 14px; }
+code { background: var(--bg); padding: 0 4px; border-radius: 3px; }

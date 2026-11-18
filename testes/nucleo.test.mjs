@@ -110,3 +110,11 @@ test('formata durações e percentuais em português', () => {
   assert.equal(formatarPercentual(100), '100%');
   assert.equal(formatarPercentual(null), '—');
 });
+
+test('gera id a partir do nome, sem acentos nem espaços', async () => {
+  const { gerarId } = await import('../site/js/nucleo.js');
+  assert.equal(gerarId('Banco do Brasil'), 'banco-do-brasil');
+  assert.equal(gerarId('  iFood! '), 'ifood');
+  assert.equal(gerarId('Receita Federal — e-CAC'), 'receita-federal-e-cac');
+  assert.equal(gerarId('Ação & Cia'), 'acao-cia');
+});

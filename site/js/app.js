@@ -1,7 +1,7 @@
 // Painel do Telemetria Status: lê os dados publicados pelo pipeline e monta a tela.
 import {
   ESTADOS, CATEGORIAS, resumoGeral, disponibilidade24h, disponibilidadeDias, latenciaMedia,
-  mttr, oscilando, formatarDuracao, formatarPercentual, diaLocal, statusVazio,
+  mttr, oscilando, formatarDuracao, formatarPercentual, diaLocal, statusVazio, validarServicos, gerarId,
 } from './nucleo.js';
 
 const $ = (id) => document.getElementById(id);
@@ -36,19 +36,36 @@ async function buscar(caminho) {
   return r.json();
 }
 
-async function carregar() {
+async function carregar(manual = false) {
+  const botao = $('btn-atualizar');
+  botao.disabled = true;
+  botao.textContent = 'Atualizando…';
   try {
     const [servicos, status, info] = await Promise.all([
       buscar('config/servicos.json'),
       buscar('dados/status.json').catch(() => statusVazio()),
       buscar('build-info.json').catch(() => null),
     ]);
+    const novidade = estado.status.atualizado_em !== status.atualizado_em;
     Object.assign(estado, { servicos, status, info });
     desenhar();
+    if (manual) avisarAtualizacao(novidade);
   } catch (e) {
     $('faixa-titulo').textContent = 'Não foi possível carregar os dados.';
     $('faixa-detalhe').textContent = e.message;
+  } finally {
+    botao.disabled = false;
+    botao.textContent = 'Atualizar';
   }
+}
+
+// Retorno visível do botão Atualizar: os dados só mudam quando o monitoramento roda.
+function avisarAtualizacao(novidade) {
+  const ult = estado.status.atualizado_em;
+  const prox = ult ? fmtHora(ult + 15 * 60 * 1000) : null;
+  $('atualizado').textContent = novidade
+    ? `Dados novos carregados · verificação de ${ult ? fmtHora(ult) : '—'}`
+    : `Já está atualizado (verificação de ${ult ? fmtHora(ult) : '—'})${prox ? ` · próxima prevista por volta de ${prox}` : ''}`;
 }
 
 function barrasAmostras(amostras, servico, n = 48) {
@@ -190,11 +207,51 @@ function iniciar() {
   $('f-busca').addEventListener('input', (e) => { estado.filtros.busca = e.target.value; desenhar(); });
   sel.addEventListener('change', (e) => { estado.filtros.categoria = e.target.value; desenhar(); });
   $('f-estado').addEventListener('change', (e) => { estado.filtros.estado = e.target.value; desenhar(); });
-  $('btn-atualizar').addEventListener('click', carregar);
+  $('btn-atualizar').addEventListener('click', () => carregar(true));
+  iniciarGerenciar();
   $('d-fechar').addEventListener('click', () => $('detalhe').close());
   $('detalhe').addEventListener('click', (e) => { if (e.target === $('detalhe')) $('detalhe').close(); });
   carregar();
   setInterval(carregar, 60_000);
+}
+
+// Formulário "Adicionar ou editar serviços": monta a linha do JSON, já validada com as mesmas regras do pipeline.
+function iniciarGerenciar() {
+  const dlg = $('gerenciar');
+  const cat = $('g-categoria');
+  for (const c of CATEGORIAS) cat.append(el('option', { value: c, text: c }));
+  $('btn-gerenciar').addEventListener('click', () => {
+    const repo = estado.info?.repositorio;
+    $('g-editar').href = repo ? `https://github.com/${repo}/edit/main/config/servicos.json` : 'https://github.com/';
+    dlg.showModal();
+  });
+  $('g-fechar').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+
+  $('g-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nome = $('g-nome').value.trim();
+    const novo = { id: gerarId(nome), nome, categoria: cat.value, url: $('g-url').value.trim() };
+    const limite = $('g-limite').value.trim();
+    if (limite) novo.limite_lento_ms = Number(limite);
+
+    const erros = validarServicos([...estado.servicos, novo]).filter((m) => m.includes(`(${novo.id})`) || !novo.id);
+    if (!novo.id) erros.unshift('Informe um nome com letras ou números.');
+    if (estado.servicos.some((s) => s.url.replace(/\/$/, '') === novo.url.replace(/\/$/, ''))) erros.push('Esse endereço já está sendo monitorado.');
+    $('g-erros').replaceChildren(...erros.map((m) => el('li', { text: m.replace(/^Serviço \d+ \([^)]*\): /, '') })));
+    $('g-resultado').classList.toggle('oculto', erros.length > 0);
+    if (!erros.length) $('g-linha').textContent = `${JSON.stringify(novo).replace(/,"/g, ', "').replace(/":/g, '": ')},`;
+  });
+
+  $('g-copiar').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText($('g-linha').textContent);
+      $('g-copiar').textContent = 'Copiado!';
+    } catch {
+      $('g-copiar').textContent = 'Selecione e copie com Ctrl+C';
+    }
+    setTimeout(() => { $('g-copiar').textContent = 'Copiar linha'; }, 2500);
+  });
 }
 
 iniciar();

@@ -23,7 +23,7 @@ Objetivo: mostrar o pipeline funcionando com uma **alteração real**, do commit
 
 ## 4. A alteração real (2 min) — o ponto principal
 
-Acrescente um serviço novo em `config/servicos.json`, por exemplo:
+Mostre o botão **Adicionar ou editar serviços** no site: preencha "iFood", categoria "Compras", endereço `https://www.ifood.com.br/` e clique em **Gerar a linha do serviço**. Mostre que ele recusa `http://` (sem o "s"), a mesma regra que o pipeline aplica. Depois acrescente a linha em `config/servicos.json`, pelo VS Code ou pelo link que o formulário abre no GitHub:
 
 ```json
 { "id": "ifood", "nome": "iFood", "categoria": "Compras", "url": "https://www.ifood.com.br/" },
@@ -44,7 +44,7 @@ git push
 ```
 
 - Vá em **Actions** e mostre a execução começando; abra-a e mostre as etapas ficando verdes uma a uma.
-- Abra a etapa de testes e o resumo (19 testes passando).
+- Abra a etapa de testes e o resumo (20 testes passando).
 - Quando o deploy terminar, mostre o resumo com o endereço publicado.
 
 ## 5. Resultado no site (1 min)
