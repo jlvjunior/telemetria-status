@@ -1,0 +1,16 @@
+[
+  { "id": "google", "nome": "Google", "categoria": "Trabalho", "url": "https://www.google.com/" },
+  { "id": "youtube", "nome": "YouTube", "categoria": "Entretenimento", "url": "https://www.youtube.com/" },
+  { "id": "whatsapp", "nome": "WhatsApp Web", "categoria": "Comunicação", "url": "https://web.whatsapp.com/" },
+  { "id": "instagram", "nome": "Instagram", "categoria": "Redes sociais", "url": "https://www.instagram.com/" },
+  { "id": "gov-br", "nome": "gov.br", "categoria": "Governo", "url": "https://www.gov.br/", "limite_lento_ms": 3000 },
+  { "id": "receita-federal", "nome": "Receita Federal", "categoria": "Governo", "url": "https://www.gov.br/receitafederal/", "limite_lento_ms": 3000 },
+  { "id": "banco-do-brasil", "nome": "Banco do Brasil", "categoria": "Bancos e pagamentos", "url": "https://www.bb.com.br/", "limite_lento_ms": 3000 },
+  { "id": "nubank", "nome": "Nubank", "categoria": "Bancos e pagamentos", "url": "https://nubank.com.br/" },
+  { "id": "mercado-livre", "nome": "Mercado Livre", "categoria": "Compras", "url": "https://www.mercadolivre.com.br/" },
+  { "id": "github", "nome": "GitHub", "categoria": "Nuvem e desenvolvimento", "url": "https://github.com/" },
+  { "id": "cloudflare", "nome": "Cloudflare", "categoria": "Nuvem e desenvolvimento", "url": "https://www.cloudflare.com/" },
+  { "id": "microsoft-365", "nome": "Microsoft 365", "categoria": "Trabalho", "url": "https://www.office.com/" },
+  { "id": "netflix", "nome": "Netflix", "categoria": "Entretenimento", "url": "https://www.netflix.com/br/" },
+  { "id": "spotify", "nome": "Spotify", "categoria": "Entretenimento", "url": "https://open.spotify.com/" }
+]

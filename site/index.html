@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Telemetria Status — situação dos serviços</title>
+  <meta name="description" content="Painel público que verifica a cada 15 minutos se os principais sites e sistemas estão no ar.">
+  <meta name="theme-color" content="#111217">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilo.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <img src="favicon.svg" alt="" width="32" height="32">
+      <div>
+        <h1>Telemetria Status</h1>
+        <p class="sub">Situação dos principais serviços, verificada a cada 15 minutos</p>
+      </div>
+    </div>
+    <div class="acoes">
+      <span id="atualizado" class="mudo">Carregando…</span>
+      <button type="button" id="btn-atualizar" class="btn" title="Recarregar os dados">Atualizar</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="faixa" class="faixa" aria-live="polite">
+      <strong id="faixa-titulo">Carregando a situação dos serviços…</strong>
+      <span id="faixa-detalhe"></span>
+    </section>
+
+    <section class="indicadores" aria-label="Indicadores gerais">
+      <div class="ind"><span class="rot">Serviços monitorados</span><strong id="i-total">—</strong></div>
+      <div class="ind ok"><span class="rot">Operacionais</span><strong id="i-ok">—</strong></div>
+      <div class="ind warn"><span class="rot">Lentos ou instáveis</span><strong id="i-alerta">—</strong></div>
+      <div class="ind crit"><span class="rot">Fora do ar</span><strong id="i-fora">—</strong></div>
+      <div class="ind info"><span class="rot">Disponibilidade 24 h</span><strong id="i-sla">—</strong></div>
+      <div class="ind"><span class="rot">Incidentes abertos</span><strong id="i-incidentes">—</strong></div>
+    </section>
+
+    <section class="painel" aria-labelledby="t-servicos">
+      <div class="cab">
+        <h2 id="t-servicos">Serviços</h2>
+        <div class="filtros">
+          <label>Buscar <input type="search" id="f-busca" placeholder="Nome do serviço"></label>
+          <label>Categoria <select id="f-categoria"><option value="">Todas</option></select></label>
+          <label>Situação
+            <select id="f-estado">
+              <option value="">Todas</option>
+              <option value="problema">Com problema</option>
+              <option value="operacional">Operacional</option>
+              <option value="lento">Lento</option>
+              <option value="instavel">Instável</option>
+              <option value="fora">Fora do ar</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div id="grade" class="grade"></div>
+      <p id="vazio" class="mudo oculto">Nenhum serviço com esses filtros.</p>
+    </section>
+
+    <section class="painel" aria-labelledby="t-incidentes">
+      <div class="cab"><h2 id="t-incidentes">Incidentes recentes</h2></div>
+      <ul id="incidentes" class="incidentes"></ul>
+    </section>
+
+    <section class="painel como" aria-labelledby="t-como">
+      <h2 id="t-como">Como funciona</h2>
+      <ol>
+        <li>A cada 15 minutos, um job agendado do GitHub Actions acessa cada serviço e mede o tempo de resposta.</li>
+        <li>Resposta abaixo do limite = <b>operacional</b>; acima = <b>lento</b>; uma falha = <b>instável</b>; duas falhas seguidas = <b>fora do ar</b>, e um incidente é aberto.</li>
+        <li>O resultado é gravado no repositório e o pipeline publica o painel atualizado no Cloudflare Pages.</li>
+      </ol>
+    </section>
+  </main>
+
+  <dialog id="detalhe" aria-labelledby="d-nome">
+    <div class="d-cab">
+      <div>
+        <h2 id="d-nome">Serviço</h2>
+        <p id="d-sub" class="mudo"></p>
+      </div>
+      <button type="button" class="btn" id="d-fechar">Fechar</button>
+    </div>
+    <div id="d-corpo"></div>
+  </dialog>
+
+  <footer class="rodape">
+    <p id="versao" class="mudo"></p>
+    <p class="mudo">Desenvolvido por Joaquim Luiz Vitória Junior · Fundamentos de DevOps · Prof. Erik Rosa Filippini</p>
+  </footer>
+</body>
+</html>

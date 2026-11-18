@@ -1,0 +1,23 @@
+{
+  "name": "telemetria-status",
+  "version": "1.0.0",
+  "description": "Painel público de status de serviços (estilo Downdetector), com CI/CD no GitHub Actions e deploy no Cloudflare Pages",
+  "author": "Joaquim Luiz Vitória Junior",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "validar": "npm run validar:html && npm run validar:js && npm run validar:config",
+    "validar:html": "html-validate site/index.html",
+    "validar:js": "node --check site/js/nucleo.js && node --check site/js/app.js && node --check scripts/verificar.mjs && node --check scripts/build.mjs",
+    "validar:config": "node scripts/validar-config.mjs",
+    "test": "node --test --experimental-test-coverage \"testes/*.test.mjs\"",
+    "build": "node scripts/build.mjs",
+    "verificar": "node scripts/verificar.mjs",
+    "local": "npm run build && npx --yes serve dist"
+  },
+  "devDependencies": {
+    "html-validate": "^9.0.0"
+  }
+}
