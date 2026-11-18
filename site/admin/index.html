@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Gestão de serviços — Telemetria Status</title>
+  <meta name="theme-color" content="#111217">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <script type="module" src="../js/admin.js"></script>
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <img src="../favicon.svg" alt="" width="32" height="32">
+      <div>
+        <h1>Gestão de serviços</h1>
+        <p class="sub">Área restrita · cada alteração salva vira um commit e passa pelo pipeline de CI/CD</p>
+      </div>
+    </div>
+    <div class="acoes">
+      <a class="btn" href="../">Voltar ao painel</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="aviso" class="aviso oculto" aria-live="polite"></section>
+
+    <section class="painel" aria-labelledby="t-lista">
+      <div class="cab">
+        <div class="titulo-acoes">
+          <h2 id="t-lista">Serviços monitorados <span id="contagem" class="mudo"></span></h2>
+          <button type="button" class="btn primario" id="btn-novo">Adicionar serviço</button>
+        </div>
+        <label class="busca-admin">Buscar <input type="search" id="a-busca" placeholder="Nome, categoria ou endereço"></label>
+      </div>
+      <div class="tabela-rolagem">
+        <table class="tabela">
+          <thead>
+            <tr><th scope="col">Nome</th><th scope="col">Categoria</th><th scope="col">Endereço</th><th scope="col">Lento acima de</th><th scope="col"><span class="oculto-visual">Ações</span></th></tr>
+          </thead>
+          <tbody id="linhas">
+            <tr><td colspan="5" class="mudo">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="barra-salvar" class="barra-salvar oculto" aria-live="polite">
+      <div>
+        <strong id="pendentes"></strong>
+        <ul id="lista-pendentes" class="mudo"></ul>
+      </div>
+      <div class="botoes">
+        <button type="button" class="btn" id="btn-descartar">Descartar alterações</button>
+        <button type="button" class="btn primario" id="btn-salvar">Salvar e publicar</button>
+      </div>
+    </section>
+
+    <section id="manual" class="painel oculto" aria-labelledby="t-manual">
+      <h2 id="t-manual">Arquivo pronto para colar no GitHub</h2>
+      <p class="mudo">Salvar direto não está configurado (falta o segredo GH_ADMIN_TOKEN). Copie o conteúdo abaixo, abra o arquivo no GitHub, apague tudo, cole e clique em <b>Commit changes</b>.</p>
+      <pre id="m-conteudo" class="arquivo"></pre>
+      <div class="botoes">
+        <button type="button" class="btn" id="m-copiar">Copiar tudo</button>
+        <a class="btn" id="m-editar" href="https://github.com/" target="_blank" rel="noopener">Abrir config/servicos.json no GitHub</a>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="editor" aria-labelledby="e-titulo">
+    <div class="d-cab">
+      <div>
+        <h2 id="e-titulo">Adicionar serviço</h2>
+        <p class="mudo" id="e-id"></p>
+      </div>
+      <button type="button" class="btn" id="e-fechar">Fechar</button>
+    </div>
+    <form id="e-form" class="form-servico" novalidate>
+      <label>Nome <input id="e-nome" type="text" required maxlength="40" placeholder="Ex.: iFood"></label>
+      <label>Categoria <select id="e-categoria"></select></label>
+      <label class="largo">Endereço (https) <input id="e-url" type="url" required placeholder="https://www.ifood.com.br/"></label>
+      <label>Lento acima de (ms) <input id="e-limite" type="number" min="200" max="20000" step="100" placeholder="2000 (padrão)"></label>
+      <label>Tempo limite (ms) <input id="e-timeout" type="number" min="1000" max="30000" step="500" placeholder="10000 (padrão)"></label>
+      <ul id="e-erros" class="erros largo"></ul>
+      <div class="botoes largo">
+        <button type="button" class="btn perigo oculto" id="e-remover">Remover este serviço</button>
+        <button type="submit" class="btn primario" id="e-ok">Adicionar à lista</button>
+      </div>
+    </form>
+    <p class="mudo nota">As alterações ficam pendentes até você clicar em <b>Salvar e publicar</b>. O identificador de um serviço existente não muda ao editar o nome, para manter o histórico.</p>
+  </dialog>
+
+  <footer class="rodape">
+    <p class="mudo">Desenvolvido por Joaquim Luiz Vitória Junior · Fundamentos de DevOps · Prof. Erik Rosa Filippini</p>
+  </footer>
+</body>
+</html>

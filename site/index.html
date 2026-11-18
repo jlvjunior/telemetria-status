@@ -44,7 +44,7 @@
       <div class="cab">
         <div class="titulo-acoes">
           <h2 id="t-servicos">Serviços</h2>
-          <button type="button" class="btn" id="btn-gerenciar">Adicionar ou editar serviços</button>
+          <a class="btn" id="btn-gerenciar" href="admin/" title="Área restrita: pede usuário e senha">🔒 Gerenciar serviços</a>
         </div>
         <div class="filtros">
           <label>Buscar <input type="search" id="f-busca" placeholder="Nome do serviço"></label>
@@ -89,36 +89,6 @@
       <button type="button" class="btn" id="d-fechar">Fechar</button>
     </div>
     <div id="d-corpo"></div>
-  </dialog>
-
-  <dialog id="gerenciar" aria-labelledby="g-titulo">
-    <div class="d-cab">
-      <div>
-        <h2 id="g-titulo">Adicionar ou editar serviços</h2>
-        <p class="mudo">A lista fica no arquivo config/servicos.json do repositório. Cada alteração passa pelo pipeline: validação, testes, build e deploy.</p>
-      </div>
-      <button type="button" class="btn" id="g-fechar">Fechar</button>
-    </div>
-    <form id="g-form" class="form-servico" novalidate>
-      <label>Nome <input id="g-nome" name="nome" type="text" required maxlength="40" placeholder="Ex.: iFood"></label>
-      <label>Categoria <select id="g-categoria" name="categoria"></select></label>
-      <label class="largo">Endereço (https) <input id="g-url" name="url" type="url" required placeholder="https://www.ifood.com.br/"></label>
-      <label>Lento acima de (ms) <input id="g-limite" name="limite" type="number" min="200" max="20000" step="100" placeholder="2000 (padrão)"></label>
-      <button type="submit" class="btn primario">Gerar a linha do serviço</button>
-    </form>
-    <ul id="g-erros" class="erros"></ul>
-    <div id="g-resultado" class="oculto">
-      <h3>1. Copie a linha</h3>
-      <pre id="g-linha"></pre>
-      <button type="button" class="btn" id="g-copiar">Copiar linha</button>
-      <h3>2. Cole no arquivo e salve</h3>
-      <ol class="passos">
-        <li>Abra o arquivo no GitHub: <a id="g-editar" href="#" target="_blank" rel="noopener">config/servicos.json</a> (abre o editor do GitHub).</li>
-        <li>Cole a linha antes do <code>]</code> final e confira a vírgula no fim da linha anterior.</li>
-        <li>Clique em <b>Commit changes</b>. O pipeline roda sozinho e, se a validação passar, o serviço aparece no painel em poucos minutos.</li>
-      </ol>
-    </div>
-    <p class="mudo nota">Para editar ou remover um serviço existente, abra o mesmo arquivo, altere ou apague a linha dele e faça o commit. Para que um serviço novo receba a primeira verificação na hora, rode o workflow “Monitoramento” em Actions.</p>
   </dialog>
 
   <footer class="rodape">

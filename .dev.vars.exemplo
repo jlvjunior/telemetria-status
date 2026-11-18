@@ -1,0 +1,6 @@
+# Copie este arquivo para .dev.vars (que NÃO vai para o GitHub) para testar a área de gestão no seu PC
+# com "npm run local:admin". Use uma senha só de teste.
+ADMIN_SENHA=troque-esta-senha
+# Opcional: para salvar direto no GitHub também no teste local.
+# GH_REPO=seu-usuario/telemetria-status
+# GH_ADMIN_TOKEN=

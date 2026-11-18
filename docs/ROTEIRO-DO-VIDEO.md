@@ -23,7 +23,15 @@ Objetivo: mostrar o pipeline funcionando com uma **alteração real**, do commit
 
 ## 4. A alteração real (2 min) — o ponto principal
 
-Mostre o botão **Adicionar ou editar serviços** no site: preencha "iFood", categoria "Compras", endereço `https://www.ifood.com.br/` e clique em **Gerar a linha do serviço**. Mostre que ele recusa `http://` (sem o "s"), a mesma regra que o pipeline aplica. Depois acrescente a linha em `config/servicos.json`, pelo VS Code ou pelo link que o formulário abre no GitHub:
+Clique em **🔒 Gerenciar serviços**: o navegador pede usuário e senha (mostre que sem senha não entra). Entre com `admin` e a senha.
+
+- Mostre a tabela com os serviços e clique em **Editar** em um deles para mostrar o formulário preenchido.
+- Clique em **Adicionar serviço**: "iFood", categoria "Compras", endereço `http://www.ifood.com.br/`. Mostre a mensagem de erro (precisa de https, a mesma regra do pipeline) e corrija para `https://www.ifood.com.br/`.
+- Mostre a barra "1 alteração pendente" e clique em **Salvar e publicar**. Aparece o commit criado ("Serviços: adiciona iFood") e o link para o Actions.
+
+(Se não configurou o `GH_ADMIN_TOKEN`, o botão se chama **Gerar arquivo**: copie o conteúdo e cole no `config/servicos.json` pelo link que a página abre.)
+
+Outra forma, pelo VS Code, acrescentando a linha em `config/servicos.json`:
 
 ```json
 { "id": "ifood", "nome": "iFood", "categoria": "Compras", "url": "https://www.ifood.com.br/" },
@@ -44,8 +52,8 @@ git push
 ```
 
 - Vá em **Actions** e mostre a execução começando; abra-a e mostre as etapas ficando verdes uma a uma.
-- Abra a etapa de testes e o resumo (20 testes passando).
-- Quando o deploy terminar, mostre o resumo com o endereço publicado.
+- Abra a etapa de testes e o resumo (29 testes passando).
+- Quando o deploy terminar, mostre o resumo com o endereço publicado e a linha "Área /admin sem senha: HTTP 401 (protegida)", o teste de segurança automático.
 
 ## 5. Resultado no site (1 min)
 

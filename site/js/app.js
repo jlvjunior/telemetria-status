@@ -1,7 +1,7 @@
 // Painel do Telemetria Status: lê os dados publicados pelo pipeline e monta a tela.
 import {
   ESTADOS, CATEGORIAS, resumoGeral, disponibilidade24h, disponibilidadeDias, latenciaMedia,
-  mttr, oscilando, formatarDuracao, formatarPercentual, diaLocal, statusVazio, validarServicos, gerarId,
+  mttr, oscilando, formatarDuracao, formatarPercentual, diaLocal, statusVazio,
 } from './nucleo.js';
 
 const $ = (id) => document.getElementById(id);
@@ -208,50 +208,10 @@ function iniciar() {
   sel.addEventListener('change', (e) => { estado.filtros.categoria = e.target.value; desenhar(); });
   $('f-estado').addEventListener('change', (e) => { estado.filtros.estado = e.target.value; desenhar(); });
   $('btn-atualizar').addEventListener('click', () => carregar(true));
-  iniciarGerenciar();
   $('d-fechar').addEventListener('click', () => $('detalhe').close());
   $('detalhe').addEventListener('click', (e) => { if (e.target === $('detalhe')) $('detalhe').close(); });
   carregar();
   setInterval(carregar, 60_000);
-}
-
-// Formulário "Adicionar ou editar serviços": monta a linha do JSON, já validada com as mesmas regras do pipeline.
-function iniciarGerenciar() {
-  const dlg = $('gerenciar');
-  const cat = $('g-categoria');
-  for (const c of CATEGORIAS) cat.append(el('option', { value: c, text: c }));
-  $('btn-gerenciar').addEventListener('click', () => {
-    const repo = estado.info?.repositorio;
-    $('g-editar').href = repo ? `https://github.com/${repo}/edit/main/config/servicos.json` : 'https://github.com/';
-    dlg.showModal();
-  });
-  $('g-fechar').addEventListener('click', () => dlg.close());
-  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
-
-  $('g-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const nome = $('g-nome').value.trim();
-    const novo = { id: gerarId(nome), nome, categoria: cat.value, url: $('g-url').value.trim() };
-    const limite = $('g-limite').value.trim();
-    if (limite) novo.limite_lento_ms = Number(limite);
-
-    const erros = validarServicos([...estado.servicos, novo]).filter((m) => m.includes(`(${novo.id})`) || !novo.id);
-    if (!novo.id) erros.unshift('Informe um nome com letras ou números.');
-    if (estado.servicos.some((s) => s.url.replace(/\/$/, '') === novo.url.replace(/\/$/, ''))) erros.push('Esse endereço já está sendo monitorado.');
-    $('g-erros').replaceChildren(...erros.map((m) => el('li', { text: m.replace(/^Serviço \d+ \([^)]*\): /, '') })));
-    $('g-resultado').classList.toggle('oculto', erros.length > 0);
-    if (!erros.length) $('g-linha').textContent = `${JSON.stringify(novo).replace(/,"/g, ', "').replace(/":/g, '": ')},`;
-  });
-
-  $('g-copiar').addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText($('g-linha').textContent);
-      $('g-copiar').textContent = 'Copiado!';
-    } catch {
-      $('g-copiar').textContent = 'Selecione e copie com Ctrl+C';
-    }
-    setTimeout(() => { $('g-copiar').textContent = 'Copiar linha'; }, 2500);
-  });
 }
 
 iniciar();

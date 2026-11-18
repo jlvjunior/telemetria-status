@@ -150,6 +150,10 @@ jobs:
     outputs:
       url: ${{ steps.deploy.outputs.deployment-url }}
     steps:
+      # O código é necessário para publicar as Pages Functions (functions/ e lib/), que protegem a área /admin.
+      - name: Baixar o código
+        uses: actions/checkout@v6
+
       - name: Baixar o artefato do build
         uses: actions/download-artifact@v7
         with:
@@ -175,6 +179,27 @@ jobs:
             echo "Projeto $PROJETO_PAGES já existe."
           else
             npx --yes wrangler@4 pages project create "$PROJETO_PAGES" --production-branch=main
+          fi
+
+      # Os segredos ficam guardados no GitHub e são repassados ao Cloudflare; nunca aparecem no código nem no log.
+      - name: Enviar os segredos da área de gestão ao Cloudflare
+        if: github.event_name != 'pull_request'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ADMIN_SENHA: ${{ secrets.ADMIN_SENHA }}
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: |
+          if [ -z "$ADMIN_SENHA" ]; then
+            echo "::warning::Segredo ADMIN_SENHA não cadastrado: a área /admin fica desativada."
+            exit 0
+          fi
+          printf '%s' "$ADMIN_SENHA" | npx --yes wrangler@4 pages secret put ADMIN_SENHA --project-name "$PROJETO_PAGES"
+          printf '%s' "$GITHUB_REPOSITORY" | npx --yes wrangler@4 pages secret put GH_REPO --project-name "$PROJETO_PAGES"
+          if [ -n "$GH_ADMIN_TOKEN" ]; then
+            printf '%s' "$GH_ADMIN_TOKEN" | npx --yes wrangler@4 pages secret put GH_ADMIN_TOKEN --project-name "$PROJETO_PAGES"
+          else
+            echo "::notice::Sem GH_ADMIN_TOKEN: a área /admin funciona no modo manual (gera o arquivo para colar no GitHub)."
           fi
 
       - name: Publicar no Cloudflare Pages
@@ -226,7 +251,17 @@ jobs:
                curl -fsS "$URL/" | grep -q "Telemetria Status" &&
                curl -fsS "$URL/build-info.json" | grep -q "$COMMIT"; then
               echo "✅ $URL está no ar com o commit ${COMMIT::7}."
-              echo "### 🔎 Verificação pós-deploy: OK (commit ${COMMIT::7})" >> "$GITHUB_STEP_SUMMARY"
+              # Teste de segurança: a área de gestão não pode abrir sem senha (401) ou deve estar desativada (503).
+              admin=$(curl -s -o /dev/null -w "%{http_code}" "$URL/admin/")
+              if [ "$admin" != "401" ] && [ "$admin" != "503" ]; then
+                echo "::error::A área /admin respondeu HTTP $admin sem senha (esperado 401)."
+                exit 1
+              fi
+              echo "🔒 /admin sem senha responde HTTP $admin (protegida)."
+              {
+                echo "### 🔎 Verificação pós-deploy: OK (commit ${COMMIT::7})"
+                echo "- Área /admin sem senha: HTTP $admin (protegida)"
+              } >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
             echo "Tentativa $tentativa/18: HTTP $codigo, ainda sem a versão nova; aguardando 10 s…"

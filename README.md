@@ -35,6 +35,8 @@ flowchart LR
     MON -->|publica| CF
     DADOS -.->|lido no build| D
     USR([Visitante]) --> CF
+    ADM([Administrador]) -->|usuário e senha| ADMIN[Área /admin<br/>Pages Functions]
+    ADMIN -->|commit via API| GH
 ```
 
 ## Pipeline de CI/CD (`.github/workflows/ci-cd.yml`)
@@ -45,10 +47,10 @@ Roda a cada **push na `main`**, a cada **pull request** e sob demanda. Cada etap
 |---|---|
 | 🔧 Preparação | Baixa o código, instala o Node.js 24 e as dependências, mostra o ambiente |
 | ✅ Validação | Confere se o `index.html` existe, valida o HTML (html-validate), a sintaxe do JavaScript e a lista de serviços |
-| 🧪 Testes | 20 testes automatizados (regras de estado, incidentes, SLA, verificador HTTP, configuração e build), com cobertura |
+| 🧪 Testes | 29 testes automatizados (regras de estado, incidentes, SLA, verificador HTTP, configuração, build, senha e API da área de gestão), com cobertura |
 | 🏗 Build | Busca o histórico mais recente, gera a pasta `dist/` com `build-info.json` (versão, commit, execução) e guarda como **artefato** |
-| 🚀 Deploy | Publica `dist/` no Cloudflare Pages com o Wrangler: **produção** na `main`, **prévia** com link comentado no pull request |
-| 🔎 Verificação pós-deploy | Acessa o site publicado e confirma que ele responde com o commit que acabou de ser publicado |
+| 🚀 Deploy | Repassa os segredos da área de gestão ao Cloudflare e publica `dist/` e as Pages Functions com o Wrangler: **produção** na `main`, **prévia** com link comentado no pull request |
+| 🔎 Verificação pós-deploy | Acessa o site publicado, confirma que ele responde com o commit que acabou de ser publicado e que `/admin` **não abre sem senha** (HTTP 401) |
 
 ## Monitoramento agendado (`.github/workflows/monitorar.yml`)
 
@@ -60,7 +62,11 @@ A cada 15 minutos: busca o histórico no ramo `dados`, testa os serviços, grava
 site/                 painel (HTML, CSS, JavaScript) — vai para o Cloudflare Pages
   js/nucleo.js        regras de estado, incidentes e SLA (usadas pelo painel e pelo verificador)
   js/app.js           montagem da tela
+  admin/ + js/admin.js  área de gestão de serviços (protegida por senha)
   _headers            cabeçalhos de segurança do Cloudflare Pages
+  _routes.json        só /admin passa pelas Functions; o resto é estático
+functions/admin/      Cloudflare Pages Functions: senha (_middleware.js) e API (api/servicos.js)
+lib/admin.js          regras da área de gestão: senha, leitura e gravação no GitHub
 config/servicos.json  lista de serviços monitorados
 scripts/              verificador, validação da configuração e build
 testes/               testes automatizados (node:test)
@@ -79,15 +85,24 @@ npm run validar      # mesma validação do pipeline
 npm test             # testes automatizados
 npm run verificar    # verifica os serviços de verdade e grava dados/status.json
 npm run local        # gera o dist/ e abre em http://localhost:3000
+npm run local:admin  # igual, com a área /admin (copie .dev.vars.exemplo para .dev.vars antes)
 ```
 
 ## Como acrescentar, editar ou remover serviços
 
 A lista fica em `config/servicos.json`. Qualquer alteração nela passa pelo pipeline: se a validação recusar, nada é publicado.
 
-1. **Pelo próprio site:** botão **Adicionar ou editar serviços** → preencha nome, categoria e endereço → **Gerar a linha do serviço**. O formulário valida com as mesmas regras do pipeline, copia a linha pronta e abre o arquivo no editor do GitHub; cole a linha antes do `]` final e clique em **Commit changes**.
+1. **Pela área de gestão (recomendado):** no painel, botão **🔒 Gerenciar serviços** (endereço `/admin`). O navegador pede usuário `admin` e a senha cadastrada no segredo `ADMIN_SENHA`. Lá aparece a tabela com todos os serviços e os botões **Editar**, **Remover** e **Adicionar serviço**. As alterações ficam pendentes até **Salvar e publicar**, que grava um commit em `config/servicos.json` (com mensagem como "Serviços: adiciona iFood") e dispara o pipeline. Sem o segredo `GH_ADMIN_TOKEN`, o botão vira **Gerar arquivo**, que monta o arquivo completo para colar no GitHub.
 2. **Pelo GitHub:** abra `config/servicos.json` no repositório, clique no lápis (**Edit this file**), altere ou apague a linha do serviço e faça o commit.
 3. **Pelo computador:** edite o arquivo no VS Code e rode `git add .`, `git commit` e `git push`.
+
+### Segurança da área de gestão
+
+- A senha **não fica no código**: é o segredo `ADMIN_SENHA` do GitHub, que o pipeline repassa ao Cloudflare. A conferência acontece no servidor (Pages Function `functions/admin/_middleware.js`), antes de a página ou a API serem entregues; sem senha a resposta é 401.
+- Para salvar direto, a Function usa um token do GitHub de **escopo mínimo** (`GH_ADMIN_TOKEN`: só este repositório, só *Contents: Read and write*), guardado como segredo no Cloudflare e nunca enviado ao navegador.
+- A API revalida a lista com as mesmas regras do pipeline, recusa pedidos de outros sites e detecta se o arquivo mudou no GitHub durante a edição.
+- Mesmo salvando pela área de gestão, o pipeline continua sendo a barreira final: validação, testes e build antes do deploy.
+- Nas prévias de pull request a área fica desativada (HTTP 503), porque os segredos só existem em produção.
 
 Um serviço novo aparece no painel como "Aguardando verificação" até a próxima rodada do monitoramento; para verificar na hora, rode o workflow **Monitoramento** em **Actions → Run workflow**.
 
