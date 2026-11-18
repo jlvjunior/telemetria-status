@@ -214,15 +214,23 @@ jobs:
           URL: ${{ needs.deploy.outputs.url }}
           COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          for tentativa in 1 2 3 4 5 6; do
-            if curl -fsS "$URL/" | grep -q "Telemetria Status" &&
+          echo "Endereço publicado: $URL"
+          if [ -z "$URL" ]; then
+            echo "::error::O deploy não informou o endereço publicado."
+            exit 1
+          fi
+          # Num projeto recém-criado, o Cloudflare pode levar alguns minutos para ativar o endereço.
+          for tentativa in $(seq 1 18); do
+            codigo=$(curl -s -o /dev/null -w "%{http_code}" "$URL/" || echo "000")
+            if [ "$codigo" = "200" ] &&
+               curl -fsS "$URL/" | grep -q "Telemetria Status" &&
                curl -fsS "$URL/build-info.json" | grep -q "$COMMIT"; then
               echo "✅ $URL está no ar com o commit ${COMMIT::7}."
               echo "### 🔎 Verificação pós-deploy: OK (commit ${COMMIT::7})" >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
-            echo "Tentativa $tentativa: ainda não respondeu com a versão nova; aguardando 10 s…"
+            echo "Tentativa $tentativa/18: HTTP $codigo, ainda sem a versão nova; aguardando 10 s…"
             sleep 10
           done
-          echo "::error::O site publicado não respondeu com a versão nova."
+          echo "::error::O site publicado não respondeu com a versão nova em 3 minutos."
           exit 1
