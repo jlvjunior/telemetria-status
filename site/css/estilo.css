@@ -130,3 +130,33 @@ a.btn { display: inline-block; text-decoration: none; }
 .arquivo { max-height: 320px; overflow: auto; background: var(--bg); border: 1px solid var(--borda); border-radius: var(--raio); padding: 10px; font-size: .78rem; }
 .oculto-visual { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 #manual { margin-top: 14px; }
+
+/* Métricas DORA */
+.dora { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.metrica { background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.metrica h2 { font-size: .9rem; font-weight: 500; color: var(--mudo); }
+.metrica .valor { font-size: 1.9rem; color: var(--forte); font-weight: 600; }
+.metrica .detalhe { margin: 0; font-size: .82rem; }
+.metrica .explica { margin: 6px 0 0; font-size: .8rem; color: var(--mudo); border-top: 1px solid var(--borda); padding-top: 8px; }
+.nivel { justify-self: start; font-size: .75rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; background: var(--borda); color: var(--txt); }
+.nivel.elite { background: var(--ok); color: #fff; }
+.nivel.alta { background: var(--info); color: #fff; }
+.nivel.media { background: var(--warn); color: #fff; }
+.nivel.baixa { background: var(--crit); color: #fff; }
+.grafico-dias { display: flex; align-items: flex-end; gap: 3px; height: 120px; margin-top: 12px; }
+.grafico-dias .coluna { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.grafico-dias .parte { display: block; width: 100%; }
+.grafico-dias .parte.ok { background: var(--ok); }
+.grafico-dias .parte.crit { background: var(--crit); }
+.grafico-dias .vazio { display: block; height: 3px; background: var(--borda); }
+.legenda { font-size: .8rem; display: flex; gap: 6px; align-items: center; }
+.ponto { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-left: 8px; }
+.ponto.ok { background: var(--ok); }
+.ponto.crit { background: var(--crit); }
+.selo { font-size: .75rem; padding: 1px 8px; border-radius: 8px; border: 1px solid var(--borda); }
+.selo.ok { border-color: var(--ok); color: #8fd284; }
+.selo.crit { border-color: var(--crit); color: #ff7383; }
+.selo.info { border-color: var(--info); color: #8ab8ff; }
+main > .painel + .painel { margin-top: 14px; }
+.tabela td a { color: #8ab8ff; }
+.tabela td.url a { color: var(--mudo); }

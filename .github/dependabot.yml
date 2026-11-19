@@ -1,0 +1,25 @@
+# Dependabot: verifica toda semana se há versões novas (ou com correção de segurança)
+# das dependências npm e das actions do GitHub, e abre um pull request para cada atualização.
+# Cada pull request passa pelo pipeline inteiro (validação, testes, segurança e build) antes de ser aceito.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'deps'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/Sao_Paulo
+    commit-message:
+      prefix: 'ci'

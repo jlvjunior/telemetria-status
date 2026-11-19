@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Métricas DevOps (DORA) — Telemetria Status</title>
+  <meta name="description" content="As quatro métricas DORA do próprio projeto, calculadas a partir do histórico do pipeline de CI/CD.">
+  <meta name="theme-color" content="#111217">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <script type="module" src="../js/metricas.js"></script>
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <img src="../favicon.svg" alt="" width="32" height="32">
+      <div>
+        <h1>Métricas DevOps (DORA)</h1>
+        <p class="sub">Calculadas a partir do histórico real do pipeline de CI/CD · <span id="m-janela">últimos 30 dias</span></p>
+      </div>
+    </div>
+    <div class="acoes">
+      <span id="m-atualizado" class="mudo" aria-live="polite">Carregando…</span>
+      <a class="btn" href="../">Voltar ao painel</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="m-aviso" class="aviso alerta oculto" aria-live="polite"></section>
+
+    <section class="dora" aria-label="As quatro métricas DORA">
+      <article class="metrica" id="c-frequencia">
+        <h2>Frequência de deploy</h2>
+        <strong class="valor">—</strong>
+        <span class="nivel"></span>
+        <p class="detalhe mudo"></p>
+        <p class="explica">Quantas vezes uma versão nova chegou à produção (pipeline ou rollback).</p>
+      </article>
+      <article class="metrica" id="c-lead">
+        <h2>Tempo de entrega</h2>
+        <strong class="valor">—</strong>
+        <span class="nivel"></span>
+        <p class="detalhe mudo"></p>
+        <p class="explica">Do commit até a versão estar no ar (mediana). Mede a velocidade do pipeline.</p>
+      </article>
+      <article class="metrica" id="c-falha">
+        <h2>Taxa de falha de mudanças</h2>
+        <strong class="valor">—</strong>
+        <span class="nivel"></span>
+        <p class="detalhe mudo"></p>
+        <p class="explica">Mudanças na main que falharam no pipeline ou foram desfeitas por rollback.</p>
+      </article>
+      <article class="metrica" id="c-recuperacao">
+        <h2>Tempo de recuperação</h2>
+        <strong class="valor">—</strong>
+        <span class="nivel"></span>
+        <p class="detalhe mudo"></p>
+        <p class="explica">Da primeira falha até a produção voltar a receber um deploy bom (mediana).</p>
+      </article>
+    </section>
+
+    <section class="painel" aria-labelledby="t-serie">
+      <h2 id="t-serie">Execuções por dia</h2>
+      <div id="serie" class="grafico-dias" role="img" aria-label="Execuções do pipeline por dia"></div>
+      <div class="eixo"><span id="serie-inicio"></span><span>hoje</span></div>
+      <p class="legenda mudo"><span class="ponto ok"></span> sucesso <span class="ponto crit"></span> falha</p>
+    </section>
+
+    <section class="painel" aria-labelledby="t-recentes">
+      <h2 id="t-recentes">Execuções recentes</h2>
+      <div class="tabela-rolagem">
+        <table class="tabela">
+          <thead>
+            <tr><th scope="col">Execução</th><th scope="col">Commit</th><th scope="col">Resultado</th><th scope="col">Duração</th><th scope="col">Quando</th></tr>
+          </thead>
+          <tbody id="recentes"><tr><td colspan="5" class="mudo">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="painel como" aria-labelledby="t-niveis">
+      <h2 id="t-niveis">Como ler os níveis</h2>
+      <p class="mudo">Faixas de referência do programa de pesquisa DORA (State of DevOps), usadas para comparar times de software.</p>
+      <div class="tabela-rolagem">
+        <table class="tabela">
+          <thead><tr><th scope="col">Métrica</th><th scope="col">Elite</th><th scope="col">Alta</th><th scope="col">Média</th><th scope="col">Baixa</th></tr></thead>
+          <tbody>
+            <tr><td>Frequência de deploy</td><td>1 ou mais por dia</td><td>de 1 por dia a 1 por semana</td><td>de 1 por semana a 1 por mês</td><td>menos de 1 por mês</td></tr>
+            <tr><td>Tempo de entrega</td><td>menos de 1 dia</td><td>de 1 dia a 1 semana</td><td>de 1 semana a 1 mês</td><td>mais de 1 mês</td></tr>
+            <tr><td>Taxa de falha</td><td>até 5%</td><td>até 10%</td><td>até 15%</td><td>acima de 15%</td></tr>
+            <tr><td>Tempo de recuperação</td><td>menos de 1 hora</td><td>menos de 1 dia</td><td>menos de 1 semana</td><td>1 semana ou mais</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p class="mudo">Desenvolvido por Joaquim Luiz Vitória Junior · Fundamentos de DevOps · Prof. Erik Rosa Filippini</p>
+  </footer>
+</body>
+</html>

@@ -82,6 +82,13 @@ Os segredos são enviados ao Cloudflare na próxima execução do pipeline na `m
 
 Abra o endereço `.pages.dev`: os cartões devem aparecer com a situação de cada serviço. No rodapé do site estão a versão, o commit e o número da execução do pipeline que publicou aquela versão.
 
+## 9. Recursos extras (nada a configurar)
+
+- **Métricas DORA:** aparecem em `/metricas` depois da primeira execução do monitoramento com a versão nova. Para gerar na hora: **Actions → Monitoramento → Run workflow**.
+- **Segurança:** a etapa 🔐 Segurança roda sozinha. Os alertas do CodeQL ficam em **Security → Code scanning**.
+- **Dependabot:** o arquivo `.github/dependabot.yml` já basta. Opcional: em **Settings → Code security**, ative **Dependabot alerts** para receber avisos de vulnerabilidade.
+- **Rollback:** **Actions → Rollback — voltar versão → Run workflow**. Usa os mesmos segredos do Cloudflare.
+
 ## Problemas comuns
 
 | Sintoma | Causa provável e solução |
@@ -94,4 +101,8 @@ Abra o endereço `.pages.dev`: os cartões devem aparecer com a situação de ca
 | `/admin` não aceita a senha | O usuário é `admin` (minúsculo). Se trocou o segredo, rode o pipeline de novo. Para o navegador esquecer a senha digitada, feche todas as janelas dele. |
 | "Salvar e publicar" dá erro 403 ou 404 | O `GH_ADMIN_TOKEN` não tem acesso ao repositório ou falta **Contents: Read and write**. |
 | "A lista mudou no GitHub enquanto você editava" | Alguém (ou outro commit) alterou o arquivo. Recarregue a página e refaça a alteração. |
+| Etapa 🔐 Segurança falha em "Procurar senhas e tokens" | Há um token ou senha escrito em algum arquivo. Apague-o do arquivo, troque o token no site de origem (ele já vazou) e use um segredo do GitHub. |
+| Etapa 🔐 Segurança falha no CodeQL | O CodeQL achou uma vulnerabilidade grave. O arquivo e a linha aparecem nas Annotations e em **Security → Code scanning**. |
+| `/metricas` mostra "As métricas aparecem depois…" | O monitoramento ainda não rodou com a versão nova. Rode **Actions → Monitoramento → Run workflow**. |
+| Rollback falha com "Não há uma versão anterior" | Só existe um deploy de produção, ou todos são do mesmo commit. Faça outra alteração antes de testar o rollback. |
 | Um serviço aparece sempre fora do ar | O site bloqueia acessos vindos de servidores. Troque o endereço ou retire o serviço da lista. |

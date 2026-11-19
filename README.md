@@ -7,7 +7,7 @@ Painel público que mostra, em tempo quase real, se os principais sites e sistem
 | **Autor** | Joaquim Luiz Vitória Junior |
 | **Disciplina** | Fundamentos de DevOps |
 | **Professor** | Erik Rosa Filippini |
-| **Site publicado** | `https://<nome-do-projeto>.pages.dev` *(preencher após o primeiro deploy)* |
+| **Site publicado** | https://telemetria-status.pages.dev |
 
 ## O que a aplicação faz
 
@@ -15,6 +15,8 @@ Painel público que mostra, em tempo quase real, se os principais sites e sistem
 - Classifica cada um como **operacional**, **lento**, **instável** ou **fora do ar**, mostra o tempo de resposta e a faixa das últimas 24 horas.
 - Abre e encerra **incidentes** automaticamente, calcula a **disponibilidade** em 24 h, 7, 30 e 90 dias, o **tempo médio de recuperação** e marca serviços **oscilando**.
 - Tem busca, filtros por categoria e situação e uma tela de detalhes por serviço.
+- Mostra as **métricas DORA** do próprio projeto (`/metricas`), calculadas a partir do histórico real do pipeline.
+- Tem uma **área de gestão** protegida por senha (`/admin`) para adicionar, editar e remover serviços.
 
 Os conceitos vêm da **Central de Telemetria** que desenvolvo no trabalho (monitoramento de infraestrutura de segurança e rede): *debounce* de quedas, incidentes, SLA, MTTR e detecção de oscilação. Aqui eles foram aplicados a serviços públicos da internet, numa aplicação estática que roda inteira no Cloudflare Pages.
 
@@ -23,38 +25,66 @@ Os conceitos vêm da **Central de Telemetria** que desenvolvo no trabalho (monit
 ```mermaid
 flowchart LR
     DEV([Desenvolvedor]) -->|git push / pull request| GH[Repositório GitHub]
-    GH --> CI[GitHub Actions<br/>CI/CD]
-    subgraph CI_PIPE[Pipeline CI/CD]
-        A[🔧 Preparação] --> B[✅ Validação] --> C[🧪 Testes] --> D[🏗 Build] --> E[🚀 Deploy] --> F[🔎 Verificação<br/>pós-deploy]
+    GH --> CI_PIPE
+    subgraph CI_PIPE[Pipeline CI/CD — GitHub Actions]
+        A[🔧 Preparação] --> B[✅ Validação]
+        B --> C[🧪 Testes]
+        B --> S[🔐 Segurança<br/>segredos · npm audit · CodeQL]
+        C --> D[🏗 Build]
+        S --> D
+        D --> E[🚀 Deploy] --> F[🔎 Verificação<br/>pós-deploy]
     end
-    CI --> CI_PIPE
-    E -->|wrangler pages deploy| CF[Cloudflare Pages<br/>*.pages.dev]
+    E -->|wrangler pages deploy| CF[Cloudflare Pages<br/>site + Functions]
+    RB([↩️ Rollback<br/>manual]) -->|API do Cloudflare| CF
     CRON([Agendamento<br/>a cada 15 min]) --> MON[📡 Monitoramento]
-    MON -->|testa os serviços| NET((Sites e sistemas))
-    MON -->|grava histórico| DADOS[(Ramo dados<br/>status.json)]
-    MON -->|publica| CF
-    DADOS -.->|lido no build| D
+    MON -->|testa| NET((Sites e sistemas))
+    MON -->|status.json + dora.json| DADOS[(Ramo dados)]
+    GH -.->|histórico de execuções| MON
+    DADOS -.->|lido ao vivo em /dados| CF
+    DEPBOT([Dependabot]) -->|pull requests de atualização| GH
     USR([Visitante]) --> CF
-    ADM([Administrador]) -->|usuário e senha| ADMIN[Área /admin<br/>Pages Functions]
-    ADMIN -->|commit via API| GH
+    ADM([Administrador]) -->|usuário e senha| CF
+    CF -->|commit via API| GH
 ```
 
 ## Pipeline de CI/CD (`.github/workflows/ci-cd.yml`)
 
-Roda a cada **push na `main`**, a cada **pull request** e sob demanda. Cada etapa só começa se a anterior passou (`needs`), então **um erro em qualquer etapa bloqueia o deploy** e o site no ar continua na última versão boa.
+Roda a cada **push na `main`**, a cada **pull request** e sob demanda. Cada etapa só começa se a anterior passou (`needs`); Testes e Segurança rodam em paralelo e o Build espera as duas. **Um erro em qualquer etapa bloqueia o deploy** e o site no ar continua na última versão boa.
 
 | Etapa | O que faz |
 |---|---|
 | 🔧 Preparação | Baixa o código, instala o Node.js 24 e as dependências, mostra o ambiente |
 | ✅ Validação | Confere se o `index.html` existe, valida o HTML (html-validate), a sintaxe do JavaScript e a lista de serviços |
-| 🧪 Testes | 29 testes automatizados (regras de estado, incidentes, SLA, verificador HTTP, configuração, build, senha e API da área de gestão), com cobertura |
+| 🧪 Testes | 38 testes automatizados (regras de estado, incidentes, SLA, verificador HTTP, configuração, build, área de gestão, métricas DORA, dados ao vivo, rollback e segurança), com cobertura |
+| 🔐 Segurança | Procura senhas e tokens esquecidos no código, audita as dependências (`npm audit`) e analisa o código com **CodeQL**; vulnerabilidade de nota 7.0 ou mais bloqueia o pipeline. Os alertas aparecem na aba **Security** do GitHub |
 | 🏗 Build | Busca o histórico mais recente, gera a pasta `dist/` com `build-info.json` (versão, commit, execução) e guarda como **artefato** |
 | 🚀 Deploy | Repassa os segredos da área de gestão ao Cloudflare e publica `dist/` e as Pages Functions com o Wrangler: **produção** na `main`, **prévia** com link comentado no pull request |
-| 🔎 Verificação pós-deploy | Acessa o site publicado, confirma que ele responde com o commit que acabou de ser publicado e que `/admin` **não abre sem senha** (HTTP 401) |
+| 🔎 Verificação pós-deploy | Acessa o site publicado, confirma que ele responde com o commit que acabou de ser publicado, que `/admin` **não abre sem senha** (HTTP 401) e de onde vêm os dados do painel |
 
 ## Monitoramento agendado (`.github/workflows/monitorar.yml`)
 
-A cada 15 minutos: busca o histórico no ramo `dados`, testa os serviços, grava o resultado de volta no ramo `dados`, roda os testes e publica o painel atualizado. O histórico fica num ramo separado para não encher a `main` de commits automáticos.
+A cada 15 minutos: testa os serviços, calcula as métricas DORA e grava `status.json` e `dora.json` no ramo `dados`. O site lê esses arquivos **ao vivo** (Pages Function em `/dados`), então o monitoramento **não faz deploy**: só mudanças de código passam pelo pipeline e chegam à produção. Se o GitHub não responder, o site usa a cópia embutida no último build.
+
+## Métricas DORA (`/metricas`)
+
+As quatro métricas que o programa de pesquisa DORA usa para medir times de DevOps, calculadas com o histórico real do GitHub Actions (últimos 30 dias):
+
+| Métrica | Como é calculada aqui |
+|---|---|
+| Frequência de deploy | Execuções bem-sucedidas do pipeline e de rollback na `main` |
+| Tempo de entrega | Mediana do tempo entre o commit e o fim do pipeline que o publicou |
+| Taxa de falha de mudanças | (execuções do pipeline que falharam + rollbacks) ÷ execuções do pipeline |
+| Tempo de recuperação | Mediana do tempo entre a primeira falha e o próximo deploy bem-sucedido (ou rollback) |
+
+Cada métrica recebe o nível Elite, Alta, Média ou Baixa, conforme as faixas de referência do relatório State of DevOps. O cálculo fica em `lib/dora.js` e tem testes.
+
+## Rollback (`.github/workflows/rollback.yml`)
+
+Volta a produção para uma versão anterior **em segundos, sem rebuild**, usando a API de rollback do Cloudflare Pages: **Actions → Rollback — voltar versão → Run workflow**, informe o motivo e, se quiser, o commit (vazio = versão anterior à que está no ar). Depois o workflow confere no site se a versão restaurada está no ar. A próxima alteração enviada para a `main` publica normalmente de novo.
+
+## Dependabot (`.github/dependabot.yml`)
+
+Toda segunda-feira o Dependabot procura versões novas das dependências npm e das actions e abre um pull request para cada uma. Esses pull requests passam pelo pipeline inteiro (sem deploy, porque não recebem os segredos).
 
 ## Estrutura
 
@@ -62,16 +92,19 @@ A cada 15 minutos: busca o histórico no ramo `dados`, testa os serviços, grava
 site/                 painel (HTML, CSS, JavaScript) — vai para o Cloudflare Pages
   js/nucleo.js        regras de estado, incidentes e SLA (usadas pelo painel e pelo verificador)
   js/app.js           montagem da tela
+  metricas/ + js/metricas.js  página das métricas DORA
   admin/ + js/admin.js  área de gestão de serviços (protegida por senha)
   _headers            cabeçalhos de segurança do Cloudflare Pages
-  _routes.json        só /admin passa pelas Functions; o resto é estático
+  _routes.json        só /admin e /dados passam pelas Functions; o resto é estático
 functions/admin/      Cloudflare Pages Functions: senha (_middleware.js) e API (api/servicos.js)
-lib/admin.js          regras da área de gestão: senha, leitura e gravação no GitHub
+functions/dados/      Cloudflare Pages Function: dados ao vivo do ramo "dados"
+lib/                  admin.js (área de gestão), dora.js (métricas), dados.js (dados ao vivo)
 config/servicos.json  lista de serviços monitorados
-scripts/              verificador, validação da configuração e build
+scripts/              verificador, validação, build, métricas DORA, rollback e verificações de segurança
 testes/               testes automatizados (node:test)
 dados/status.json     arquivo inicial do histórico (o real fica no ramo "dados")
-.github/workflows/    ci-cd.yml e monitorar.yml
+.github/workflows/    ci-cd.yml, monitorar.yml e rollback.yml
+.github/dependabot.yml atualizações automáticas de dependências
 docs/                 guia passo a passo e roteiro do vídeo
 ```
 
@@ -83,6 +116,7 @@ Pré-requisito: Node.js 22 ou superior.
 npm install
 npm run validar      # mesma validação do pipeline
 npm test             # testes automatizados
+npm run seguranca    # procura segredos no código e audita as dependências
 npm run verificar    # verifica os serviços de verdade e grava dados/status.json
 npm run local        # gera o dist/ e abre em http://localhost:3000
 npm run local:admin  # igual, com a área /admin (copie .dev.vars.exemplo para .dev.vars antes)
@@ -118,6 +152,8 @@ Campos opcionais: `limite_lento_ms` (padrão 2000) e `timeout_ms` (padrão 10000
 
 - As verificações saem dos servidores do GitHub, na internet pública: medem se o serviço responde de lá, não da sua rede. Sistemas internos de empresas não podem ser testados.
 - O GitHub pode atrasar execuções agendadas em horários de pico; o intervalo real pode passar de 15 minutos.
+- Os dados ao vivo passam pelo cache do GitHub (raw.githubusercontent.com), que pode atrasar a atualização em até 5 minutos.
+- As métricas DORA de um projeto individual e recente têm poucas amostras; servem para mostrar o método, não para comparar com times grandes.
 - Uma resposta HTTP abaixo de 500 (inclusive 403 de sites que bloqueiam robôs) conta como "no ar": o servidor respondeu.
 
 Guia de configuração: [docs/GUIA-PASSO-A-PASSO.md](docs/GUIA-PASSO-A-PASSO.md) · Roteiro do vídeo: [docs/ROTEIRO-DO-VIDEO.md](docs/ROTEIRO-DO-VIDEO.md)

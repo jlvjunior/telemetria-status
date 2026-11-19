@@ -1,4 +1,4 @@
-# Roteiro do vídeo (6 a 8 minutos)
+# Roteiro do vídeo (8 a 10 minutos)
 
 Objetivo: mostrar o pipeline funcionando com uma **alteração real**, do commit até o site atualizado.
 
@@ -17,7 +17,9 @@ Objetivo: mostrar o pipeline funcionando com uma **alteração real**, do commit
 ## 3. O pipeline (1 min 30 s)
 
 - Abra `.github/workflows/ci-cd.yml` e mostre as etapas e os `needs` (cada etapa depende da anterior).
-- Explique: Preparação → Validação → Testes → Build (artefato `dist/`) → Deploy → Verificação pós-deploy.
+- Explique: Preparação → Validação → **Testes e Segurança em paralelo** → Build (artefato `dist/`) → Deploy → Verificação pós-deploy.
+- Na etapa **🔐 Segurança**, mostre as três verificações: segredos no código, `npm audit` e CodeQL. Abra **Security → Code scanning** para mostrar onde ficam os alertas.
+- Mostre `.github/dependabot.yml`: "toda semana o Dependabot abre pull requests de atualização, e cada um passa pelo pipeline".
 - Mostre que o deploy usa os **segredos** do Cloudflare (sem senha no código).
 - Mostre rapidamente `monitorar.yml`: o agendamento a cada 15 minutos.
 
@@ -52,7 +54,7 @@ git push
 ```
 
 - Vá em **Actions** e mostre a execução começando; abra-a e mostre as etapas ficando verdes uma a uma.
-- Abra a etapa de testes e o resumo (29 testes passando).
+- Abra a etapa de testes e o resumo (38 testes passando) e o resumo da Segurança (0 vulnerabilidades graves).
 - Quando o deploy terminar, mostre o resumo com o endereço publicado e a linha "Área /admin sem senha: HTTP 401 (protegida)", o teste de segurança automático.
 
 ## 5. Resultado no site (1 min)
@@ -73,9 +75,26 @@ git push
 - Recarregue o site: continua no ar, na versão anterior.
 - Corrija (`https://`), envie de novo e mostre o pipeline verde.
 
-## 7. Encerramento (30 s)
+## 7. Rollback: voltando uma versão em segundos (1 min)
 
-"Resumindo: cada alteração passa por validação, testes e build; só se tudo passar o GitHub Actions publica no Cloudflare Pages e confere se o site está no ar com a versão nova. O monitoramento agendado mantém o painel atualizado sozinho. O código está no GitHub e o site em [endereço]."
+"E se uma versão com problema chegasse à produção?"
+
+- **Actions → Rollback — voltar versão → Run workflow**. Motivo: "Demonstração de rollback". Deixe o commit vazio.
+- Mostre a execução terminando em poucos segundos e o resumo: versão que estava no ar → versão restaurada.
+- Recarregue o site: o rodapé mostra o commit anterior (por exemplo, sem o iFood).
+- "Para voltar à versão atual, basta enviar uma nova alteração ou rodar o rollback informando o commit novo."
+
+## 8. Métricas DORA (1 min)
+
+- Antes, rode **Actions → Monitoramento → Run workflow** para as métricas incluírem o rollback (elas se atualizam a cada 15 minutos).
+- No site, clique em **📈 Métricas DevOps**.
+- Explique as quatro métricas: frequência de deploy, tempo de entrega, taxa de falha e tempo de recuperação, com o nível de cada uma.
+- Mostre que o gráfico e a tabela trazem as execuções reais do pipeline, inclusive a falha proposital da etapa 6 e o rollback da etapa 7.
+- "Essas são as métricas que o mercado usa para medir times de DevOps; aqui elas são calculadas automaticamente a partir do GitHub Actions."
+
+## 9. Encerramento (30 s)
+
+"Resumindo: cada alteração passa por validação, testes e verificação de segurança; só se tudo passar o GitHub Actions publica no Cloudflare Pages e confere se o site está no ar com a versão nova. Se algo der errado, o rollback volta a versão em segundos, e as métricas DORA mostram a saúde do processo. O código está no GitHub e o site em https://telemetria-status.pages.dev."
 
 ## Dicas de gravação
 

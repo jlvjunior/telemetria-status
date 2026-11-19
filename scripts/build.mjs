@@ -30,6 +30,10 @@ export async function build(destino = join(raiz, 'dist')) {
     dados = JSON.parse(await readFile(join(raiz, 'dados', 'status.json'), 'utf8'));
   } catch { dados = statusVazio(); }
   await writeFile(join(destino, 'dados', 'status.json'), JSON.stringify(dados));
+  // Métricas DORA (cópia de segurança; a versão ao vivo vem do ramo "dados").
+  try {
+    await cp(join(raiz, 'dados', 'dora.json'), join(destino, 'dados', 'dora.json'));
+  } catch { /* ainda não geradas */ }
 
   const pkg = JSON.parse(await readFile(join(raiz, 'package.json'), 'utf8'));
   const info = {

@@ -1,5 +1,7 @@
-# Monitoramento agendado: verifica os serviços a cada 15 minutos,
-# grava o histórico no ramo "dados" e publica o painel atualizado.
+# Monitoramento agendado: verifica os serviços a cada 15 minutos, calcula as métricas DORA
+# e grava status.json e dora.json no ramo "dados". O site lê esses arquivos ao vivo
+# (Pages Function em /dados), então o monitoramento NÃO faz deploy: só mudanças de código
+# passam pelo pipeline e chegam à produção.
 name: Monitoramento — verificação agendada
 
 on:
@@ -8,28 +10,29 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  deployments: write
+  contents: write   # gravar o ramo "dados"
+  actions: read     # ler o histórico do pipeline para as métricas DORA
 
 concurrency:
   group: monitoramento
   cancel-in-progress: false
 
+defaults:
+  run:
+    shell: bash
+
 env:
   NODE_VERSION: 24
-  PROJETO_PAGES: ${{ vars.CF_PAGES_PROJECT || 'telemetria-status' }}
 
 jobs:
   verificar:
-    name: 📡 Verificar serviços e publicar
+    name: 📡 Verificar serviços e calcular métricas
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
 
       - name: Buscar o histórico (ramo "dados")
         run: |
@@ -42,30 +45,26 @@ jobs:
       - name: Verificar os serviços
         run: npm run verificar
 
+      - name: Calcular as métricas DORA
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Se a API do GitHub falhar, mantém as métricas anteriores e segue o monitoramento.
+          if git show FETCH_HEAD:dora.json > /tmp/dora-anterior.json 2>/dev/null; then cp /tmp/dora-anterior.json dados/dora.json; fi
+          npm run dora || echo "::warning::Não foi possível atualizar as métricas DORA nesta rodada."
+
       - name: Gravar o histórico no ramo "dados"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           rm -rf /tmp/dados && mkdir -p /tmp/dados
           cp dados/status.json /tmp/dados/status.json
+          [ -f dados/dora.json ] && cp dados/dora.json /tmp/dados/dora.json
           cd /tmp/dados
           git init -q -b dados
           git config user.name "telemetria-status[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add status.json
+          git add .
           git commit -qm "Verificação de $(date -u +%Y-%m-%dT%H:%MZ)"
           # Um único commit sobrescrito a cada rodada: o histórico de verificações fica no próprio arquivo.
           git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" dados
-
-      - name: Testar antes de publicar
-        run: npm run validar:config && npm test
-
-      - name: Gerar o site
-        run: npm run build
-
-      - name: Publicar no Cloudflare Pages
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ env.PROJETO_PAGES }} --branch=main --commit-hash=${{ github.sha }} --commit-dirty=true

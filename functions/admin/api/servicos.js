@@ -2,16 +2,7 @@
 // GET  /admin/api/servicos → lista atual de serviços (do GitHub, quando há token) e se dá para salvar direto.
 // PUT  /admin/api/servicos → valida a lista com as mesmas regras do pipeline e grava um commit no GitHub.
 import { lerConfig, salvarConfig, conferirLista, limparServico, resumirMudancas, json, ErroGitHub } from '../../../lib/admin.js';
-
-async function repositorio(env, request) {
-  if (env.GH_REPO) return env.GH_REPO;
-  try {
-    const r = await env.ASSETS.fetch(new URL('/build-info.json', request.url));
-    return (await r.json()).repositorio || null;
-  } catch {
-    return null;
-  }
-}
+import { repositorio } from '../../../lib/repositorio.js';
 
 export async function onRequestGet({ env, request }) {
   const repo = await repositorio(env, request);
