@@ -176,7 +176,7 @@ jobs:
         run: ls -laR dist
 
       - name: Guardar o artefato
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: dist
